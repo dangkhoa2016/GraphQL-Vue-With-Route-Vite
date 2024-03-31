@@ -1,22 +1,17 @@
 <template>
-
-  <UserDetail :user-id="authInfo.user?.id" />
-
+	<UserDetail :user-id="authInfo.user?.id" />
 </template>
 
 <script>
-  export default {
-    name: 'UserProfile',
-  }
+	export default {
+		name: 'UserProfile',
+	};
 </script>
 
 <script setup>
+	import { useAuthStore } from '@/stores/authStore.mjs';
 
-  import { useAuthStore, } from '@/stores/authStore.mjs';
+	import UserDetail from '@/components/UserDetail.vue';
 
-  import UserDetail from '@/components/UserDetail.vue';
-
-
-  const { authInfo } = useAuthStore();
-
+	const { authInfo } = useAuthStore();
 </script>
