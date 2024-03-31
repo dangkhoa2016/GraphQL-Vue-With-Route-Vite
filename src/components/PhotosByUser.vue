@@ -1,154 +1,188 @@
 <template>
+	<div class="mt-4" :id="`photos-by-user-${userId}`">
+		<img
+			v-if="!isAuthenticated"
+			src="/src/assets/images/must-login-to-view-photos.png"
+			class="d-flex mx-auto h-auto mw-sm-75 mw-md-50"
+		/>
+		<transition v-else :name="noPhotos ? '' : 'just-fade'" mode="out-in">
+			<div v-if="loadingPhotos" class="text-center">
+				<p>Loading...</p>
 
-  <div class='mt-4' :id='`photos-by-user-${userId}`'>
-    <img v-if='!isAuthenticated' src='/src/assets/images/must-login-to-view-photos.png'
-      class="d-flex mx-auto h-auto mw-sm-75 mw-md-50">
-    <transition v-else :name="noPhotos ? '' : 'just-fade'" mode="out-in">
-      <div v-if="loadingPhotos" class="text-center">
-        <p>Loading...</p>
-
-        <PhotosLoading />
-      </div>
-      <div v-else-if="loadPhotosError">
-        <ErrorLoadPhotos :message="loadPhotosError"
-          :show-reload-button='true' @reload="handlePageChange" />
-      </div>
-      <p v-else-if="noPhotos">No photos found.</p>
-      <div v-else>
-        <PhotosBlock :gallery-id='`user-${userId}`' :data="photos" :is-admin="isAdmin"
-          :current-user-id='authInfo.user?.id'
-          main-class='row-cols-1 row-cols-xl-4 row-cols-sm-2 row-cols-md-3 g-xl-3 g-lg-3 g-md-3 g-3' />
-        <Pagination v-if='totalItems' v-model="pageIndex"
-          :total-items="totalItems"
-          :items-per-page="itemsPerPage" />
-      </div>
-    </transition>
-  </div>
-
+				<PhotosLoading />
+			</div>
+			<div v-else-if="loadPhotosError">
+				<ErrorLoadPhotos
+					:message="loadPhotosError"
+					:show-reload-button="true"
+					@reload="handlePageChange"
+				/>
+			</div>
+			<p v-else-if="noPhotos">No photos found.</p>
+			<div v-else>
+				<PhotosBlock
+					:gallery-id="`user-${userId}`"
+					:data="photos"
+					:is-admin="isAdmin"
+					:current-user-id="authInfo.user?.id"
+					main-class="row-cols-1 row-cols-xl-4 row-cols-sm-2 row-cols-md-3 g-xl-3 g-lg-3 g-md-3 g-3"
+				/>
+				<Pagination
+					v-if="totalItems"
+					v-model="pageIndex"
+					:total-items="totalItems"
+					:items-per-page="itemsPerPage"
+				/>
+			</div>
+		</transition>
+	</div>
 </template>
 
 <script>
-  export default {
-    name: 'PhotosByUser',
-  }
+	export default {
+		name: 'PhotosByUser',
+	};
 </script>
 
 <script setup>
-
-  import { ref, onMounted, watch, computed, onBeforeUnmount, } from 'vue';
+	import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue';
 	import { useRouter } from 'vue-router';
 
 	import emitter from '@/libs/eventBus.mjs';
 	import { useAuthStore, logout } from '@/stores/authStore.mjs';
 
-  import { usePhotoStore, fetchPhotosByUser, setLoadPhotosError } from '@/stores/photosStore.mjs';
+	import {
+		usePhotoStore,
+		fetchPhotosByUser,
+		setLoadPhotosError,
+	} from '@/stores/photosStore.mjs';
 
-  import PhotosBlock from './PhotosBlock.vue';
-  import Pagination from './Pagination.vue';
-  import ErrorLoadPhotos from './ErrorLoadPhotos.vue';
-  import PhotosLoading from './PhotosLoading.vue';
+	import PhotosBlock from './PhotosBlock.vue';
+	import Pagination from './Pagination.vue';
+	import ErrorLoadPhotos from './ErrorLoadPhotos.vue';
+	import PhotosLoading from './PhotosLoading.vue';
 
+	const props = defineProps({
+		userId: {
+			type: [Number, String],
+			required: false,
+			default: null,
+		},
+		modelValue: {
+			type: Number,
+			required: false,
+			default: 1,
+		},
+	});
 
-  const props = defineProps({
-    userId: {
-      type: [Number, String],
-      required: false,
-      default: null,
-    },
-    modelValue: {
-      type: Number,
-      required: false,
-      default: 1,
-    },
-  });
+	const emits = defineEmits(['update:modelValue']);
 
-  const emits = defineEmits(['update:modelValue']);
+	const router = useRouter();
 
-  const router = useRouter();
+	const { isAuthenticated, authInfo, isAdmin } = useAuthStore();
 
-  const { isAuthenticated, authInfo, isAdmin } = useAuthStore();
+	const itemsPerPage = 8;
+	const pageIndex = ref(1);
+	const {
+		photos,
+		totalItems = 0,
+		/*totalPages = 0, */ loadingPhotos,
+		loadPhotosError,
+	} = usePhotoStore();
+	const loaded = ref(false);
+	const noPhotos = computed(
+		() => loaded.value && !(photos.value && photos.value.length > 0),
+	);
 
-  const itemsPerPage = 8;
-  const pageIndex = ref(1);
-  const { photos, totalItems = 0, /*totalPages = 0, */ loadingPhotos, loadPhotosError } = usePhotoStore();
-  const loaded = ref(false);
-  const noPhotos = computed(() => (loaded.value && !(photos.value && photos.value.length > 0)));
+	const timeoutRedirect = ref(null);
 
-  const timeoutRedirect = ref(null);
+	const fetchOptions = computed(() => {
+		return {
+			mainField: 'photosByUserId',
+			pageIndex: pageIndex.value,
+			itemsPerPage,
+		};
+	});
 
-  const fetchOptions = computed(() => {
-    return {
-      mainField: 'photosByUserId',
-      pageIndex: pageIndex.value,
-      itemsPerPage,
-    };
-  });
+	const scrollToTop = () => {
+		const el = document.getElementById(`photos-by-user-${props.userId}`);
+		if (!el) return;
 
+		window.scrollTo(0, el.offsetTop - 150);
+	};
 
-  const scrollToTop = () => {
-    const el = document.getElementById(`photos-by-user-${props.userId}`);
-    if (!el) return;
+	const clearTimeoutRedirect = () => {
+		if (timeoutRedirect.value) {
+			clearTimeout(timeoutRedirect.value);
+			timeoutRedirect.value = null;
+		}
+	};
 
-    window.scrollTo(0, el.offsetTop - 150);
-  };
+	const handlePageChange = () => {
+		clearTimeoutRedirect();
 
-  const clearTimeoutRedirect = () => {
-    if (timeoutRedirect.value) {
-      clearTimeout(timeoutRedirect.value);
-      timeoutRedirect.value = null;
-    }
-  };
+		fetchPhotosByUser(
+			props.userId,
+			'id, title, description, url, likes_count, status, created_at, owner { id }',
+			authInfo.value?.token,
+			fetchOptions.value,
+		);
 
-  const handlePageChange = () => {
-    clearTimeoutRedirect();
+		loaded.value = true;
+	};
 
-    fetchPhotosByUser(props.userId,
-      'id, title, description, url, likes_count, status, created_at, owner { id }',
-      authInfo.value?.token, fetchOptions.value);
+	onMounted(() => {
+		if (!isAuthenticated.value) {
+			emitter.emit('toast', {
+				title: 'Notice',
+				message: 'Please login to see user photos.',
+			});
+			return;
+		}
 
-    loaded.value = true;
-  };
+		if (!props.userId) return;
 
+		pageIndex.value = props.modelValue ?? 1;
+		if (!photos.value || photos.value.length === 0) handlePageChange();
+	});
 
-  onMounted(() => {
-    if (!isAuthenticated.value) {
-      emitter.emit('toast', { title: 'Notice', message: 'Please login to see user photos.' });
-      return;
-    }
+	onBeforeUnmount(() => {
+		clearTimeoutRedirect();
+	});
 
-    if (!props.userId)
-      return;
+	watch(
+		() => loadPhotosError.value,
+		(newVal /*, oldVal*/) => {
+			if (
+				newVal &&
+				(newVal.includes('Session was expired') ||
+					newVal.includes('Session was not found'))
+			) {
+				emitter.emit('toast', {
+					title: 'Session Expired',
+					message:
+						'Please login again.<br>You will be redirected to login page in 10 seconds.',
+				});
+				timeoutRedirect.value = setTimeout(() => {
+					setLoadPhotosError(null);
+					logout();
 
-    pageIndex.value = props.modelValue ?? 1;
-    if (!photos.value || photos.value.length === 0)
-      handlePageChange();
-  });
+					emitter.emit('route-transition', 'bounce');
+					router.push({
+						name: 'Login',
+						query: { redirect: router.currentRoute.value.fullPath },
+					});
+				}, 10000);
+			}
+		},
+	);
 
-  onBeforeUnmount(() => {
-    clearTimeoutRedirect();
-  });
+	watch(pageIndex, (newVal) => {
+		if (newVal === props.modelValue) return;
 
-  watch(() => loadPhotosError.value, (newVal/*, oldVal*/) => {
-    if (newVal && (newVal.includes('Session was expired') || newVal.includes('Session was not found'))) {
-      emitter.emit('toast', { title: 'Session Expired', message: 'Please login again.<br>You will be redirected to login page in 10 seconds.' });
-      timeoutRedirect.value = setTimeout(() => {
-        setLoadPhotosError(null);
-        logout();
+		emits('update:modelValue', newVal);
 
-        emitter.emit('route-transition', 'bounce');
-        router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } });
-      }, 10000);
-    }
-  });
-
-  watch(pageIndex, (newVal) => {
-    if (newVal === props.modelValue)
-      return;
-
-    emits('update:modelValue', newVal);
-
-    scrollToTop();
-    setTimeout(handlePageChange, 600);
-  });
-
+		scrollToTop();
+		setTimeout(handlePageChange, 600);
+	});
 </script>
