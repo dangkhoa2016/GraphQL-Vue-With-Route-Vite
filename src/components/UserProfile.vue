@@ -126,7 +126,7 @@
 
 <script>
 	export default {
-		name: 'UserInfo',
+		name: 'UserProfile',
 	};
 </script>
 

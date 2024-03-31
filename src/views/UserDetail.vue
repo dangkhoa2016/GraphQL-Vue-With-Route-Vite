@@ -8,7 +8,7 @@
 			@reload="reloadUser"
 		/>
 
-		<UserInfo
+		<UserProfile
 			:loading="loadingUser"
 			:user="user"
 			:show-toggle-follow="showToggleFollow"
@@ -65,16 +65,8 @@
 	import SimpleTabs from '@/components/SimpleTabs.vue';
 	import CatsByUser from '@/components/CatsByUser.vue';
 	import PhotosByUser from '@/components/PhotosByUser.vue';
-	import UserInfo from '@/components/UserInfo.vue';
+	import UserProfile from '@/components/UserProfile.vue';
 	import ErrorLoadUsers from '@/components/ErrorLoadUsers.vue';
-
-	const props = defineProps({
-		userId: {
-			type: [Number, String],
-			required: false,
-			default: null,
-		},
-	});
 
 	const catPageIndex = ref(1);
 	const photoPageIndex = ref(1);
@@ -89,6 +81,8 @@
 	const showToggleFollow = computed(() => {
 		return authInfo.value?.user?.id !== user.value?.id;
 	});
+
+	const pendingLoadUserId = computed(() => router.currentRoute.value.params.id);
 
 	const bioBlocks = computed(() => {
 		if (loadingUser.value) return [];
@@ -111,10 +105,10 @@
 
 	const reloadUser = () => {
 		clearTimeoutRedirect();
-		if (!props.userId) return;
+		if (!pendingLoadUserId.value) return;
 
 		fetchUser(
-			props.userId,
+			pendingLoadUserId.value,
 			`
       id, name, email, image, bio, followed, followers_count, photos_count,
       cats_count, status, created_at, likes_count, facebook_url, pinterest_url,
@@ -135,7 +129,7 @@
 		clearTimeoutRedirect();
 	});
 
-	watch(() => props.userId, reloadUser);
+	watch(pendingLoadUserId, reloadUser);
 
 	watch(
 		() => loadUserError.value,
