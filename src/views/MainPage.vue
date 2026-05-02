@@ -17,10 +17,10 @@
             </div>
             <a href="#" class="btn btn-light px-5 rounded-pill shadow-sm">Learn More</a>
           </div>
-          <div class="col-lg-6 px-5 mx-auto order-1 order-lg-2"><img src="https://bootstrapious.com/i/snippets/sn-about/img-1.jpg" alt="" class="img-fluid mb-4 mb-lg-0" /></div>
+          <div class="col-lg-6 px-5 mx-auto order-1 order-lg-2"><img src="/src/assets/images/bg1.jpg" alt="" class="img-fluid mb-4 mb-lg-0" /></div>
         </div>
         <div class="row align-items-center">
-          <div class="col-lg-6 px-5 mx-auto"><img src="https://bootstrapious.com/i/snippets/sn-about/img-2.jpg" alt="" class="img-fluid mb-4 mb-lg-0" /></div>
+          <div class="col-lg-6 px-5 mx-auto"><img src="/src/assets/images/bg2.jpg" alt="" class="img-fluid mb-4 mb-lg-0" /></div>
           <div class="col-lg-6">
             <div class="col d-flex align-items-start">
               <div class="fs-4 me-3">
@@ -49,7 +49,7 @@
               and become part of a community that cherishes the joy, comfort, and unique charm that cats bring into our lives.
             </p>
           </div>
-          <div class="col-lg-6"><img src="https://bootstrapious.com/i/snippets/sn-about/illus.png" alt="" class="img-fluid" /></div>
+          <div class="col-lg-6"><img src="/src/assets/images/bg3.jpg" alt="" class="img-fluid" /></div>
         </div>
       </div>
     </div>
@@ -81,19 +81,21 @@
 	// import { useAuthStore, } from '@/stores/authStore.mjs';
 	// import emitter from '@/libs/eventBus.mjs';
 
-  import SimpleGallery from '@/components/SimpleGallery.vue';
-  import TopUsers from '@/components/TopUsers.vue';
+	import SimpleGallery from '@/components/SimpleGallery.vue';
+	import TopUsers from '@/components/TopUsers.vue';
+	import catImg1 from '@/assets/images/cat-img1.jpg';
+	import catImg1Thumb from '@/assets/images/cat-img1-thumb.jpg';
 
 
-  // const { isAuthenticated, } = useAuthStore();
+	// const { isAuthenticated, } = useAuthStore();
 
-  const images = [
-    {
-      largeURL: 'https://www.enwallpaper.com/wp-content/uploads/2023/11/cute-cat-wallpaper.jpg',
-      thumbnailURL: 'https://wsrv.nl/?url=https://www.enwallpaper.com/wp-content/uploads/2023/11/cute-cat-wallpaper.jpg&w=300&h=300',
-      title: 'Greatest',
-      description: 'The greatest cat in the world',
-    },
+	const images = [
+		{
+			largeURL: catImg1,
+			thumbnailURL: catImg1Thumb,
+			title: 'Greatest',
+			description: 'The greatest cat in the world',
+		},
     {
       largeURL:  'https://images2.alphacoders.com/132/1327359.png',
       thumbnailURL: 'https://images2.alphacoders.com/132/thumb-1327359.png',
