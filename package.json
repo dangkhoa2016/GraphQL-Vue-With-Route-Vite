@@ -1,6 +1,11 @@
 {
 	"name": "graphql-vue-with-route-vite",
-	"version": "0.0.0",
+	"version": "1.0.0",
+	"description": "A Vue.js project with GraphQL and routing, built using Vite.",
+	"author": "Đăng Khoa <i.am@dangkhoa.dev>",
+	"engines": {
+		"node": ">=20.19.0"
+	},
 	"scripts": {
 		"dev": "vite",
 		"build": "rm -rf ./dist && vite build",
